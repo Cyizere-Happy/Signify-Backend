@@ -1,18 +1,22 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:15
-    container_name: signify_db
-    restart: always
+  dev-db:
+    image: postgres:13
+    container_name: signify-db
+    ports:
+      - "5434:5432"        
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123456
+      POSTGRES_PASSWORD: 123
       POSTGRES_DB: signify_db
-    ports:
-      - "5432:5432"
+    networks:
+      - forward
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data  
+
+networks:
+  forward:
 
 volumes:
   db_data:

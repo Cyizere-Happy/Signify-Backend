@@ -5,10 +5,82 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model Admin {
+  admin_id      String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  password_hash String
+  created_at    DateTime @default(now())
+  surveys       Survey[]
+}
+
+model Survey {
+  survey_id   String   @id @default(uuid())
+  title       String
+  description String
+  status      String
+  start_date  DateTime
+  end_date    DateTime
+  created_at  DateTime @default(now())
+  admin       Admin    @relation(fields: [adminId], references: [admin_id])
+  adminId     String
+  questions   Question[]
+  locations   SurveyLocation[]
+  responses   Response[]
+}
+
+model SurveyLocation {
+  survey_location_id String @id @default(uuid())
+  country            String
+  district           String
+  sector             String
+  survey             Survey @relation(fields: [surveyId], references: [survey_id])
+  surveyId           String
+}
+
+model Question {
+  question_id   String   @id @default(uuid())
+  question_text String
+  question_type String
+  is_required   Boolean
+  order_index   Int
+  survey        Survey   @relation(fields: [surveyId], references: [survey_id])
+  surveyId      String
+  options       QuestionOption[]
+  answers       Answer[]
+}
+
+model QuestionOption {
+  option_id   String   @id @default(uuid())
+  option_text String
+  question    Question @relation(fields: [questionId], references: [question_id])
+  questionId  String
+}
+
+model Response {
+  response_id     String   @id @default(uuid())
+  anonymous_token String   @unique
+  country         String
+  district        String
+  sector          String
+  submitted_at    DateTime @default(now())
+  survey          Survey   @relation(fields: [surveyId], references: [survey_id])
+  surveyId        String
+  answers         Answer[]
+}
+
+model Answer {
+  answer_id   String   @id @default(uuid())
+  answer_text String
+  response    Response @relation(fields: [responseId], references: [response_id])
+  responseId  String
+  question    Question @relation(fields: [questionId], references: [question_id])
+  questionId  String
 }
