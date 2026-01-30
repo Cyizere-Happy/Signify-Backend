@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json yarn.lock ./
 
-# Install dependencies
-RUN yarn install --frozen-lockfile --production
+# Install all dependencies (including dev dependencies for build)
+RUN yarn install --frozen-lockfile
 
 # Copy source code
 COPY . .
@@ -18,6 +18,9 @@ RUN npx prisma generate
 
 # Build the application
 RUN npm run build
+
+# Remove dev dependencies to reduce image size
+RUN yarn install --frozen-lockfile --production
 
 # Expose port
 EXPOSE 3005
