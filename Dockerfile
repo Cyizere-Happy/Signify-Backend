@@ -16,8 +16,11 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build the application
+# Build the application with verbose output
 RUN npm run build
+
+# Verify dist directory exists and list contents
+RUN ls -la dist/ || echo "Dist directory not found"
 
 # Production stage
 FROM node:20-alpine AS production
@@ -34,6 +37,9 @@ RUN yarn install --frozen-lockfile --production && yarn cache clean
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+
+# Verify dist directory exists in production
+RUN ls -la dist/ || echo "Dist directory not found in production"
 
 # Expose port
 EXPOSE 3005
