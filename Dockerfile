@@ -47,6 +47,9 @@ RUN ls -la dist/ || echo "Dist directory not found in production"
 # Verify main.js exists in correct location
 RUN ls -la dist/src/main.js || echo "Main.js not found in dist/src/"
 
+# Verify .prisma directory exists
+RUN ls -la node_modules/.prisma/ || echo ".prisma directory not found"
+
 # Expose port
 EXPOSE 3005
 
