@@ -1,5 +1,5 @@
 # Use Node.js 20 LTS
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -19,8 +19,21 @@ RUN npx prisma generate
 # Build the application
 RUN npm run build
 
-# Remove dev dependencies to reduce image size
-RUN yarn install --frozen-lockfile --production
+# Production stage
+FROM node:20-alpine AS production
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json yarn.lock ./
+
+# Install only production dependencies
+RUN yarn install --frozen-lockfile --production && yarn cache clean
+
+# Copy built application from builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 # Expose port
 EXPOSE 3005
