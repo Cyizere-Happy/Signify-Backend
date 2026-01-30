@@ -39,6 +39,7 @@ RUN yarn install --frozen-lockfile --production && yarn cache clean
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 # Verify dist directory exists in production
 RUN ls -la dist/ || echo "Dist directory not found in production"
