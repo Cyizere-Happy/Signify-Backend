@@ -41,6 +41,9 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 # Verify dist directory exists in production
 RUN ls -la dist/ || echo "Dist directory not found in production"
 
+# Verify main.js exists in correct location
+RUN ls -la dist/src/main.js || echo "Main.js not found in dist/src/"
+
 # Expose port
 EXPOSE 3005
 
