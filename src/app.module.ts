@@ -5,9 +5,13 @@ import { SurveyModule } from './survey/survey.module';
 import { ResponseModule } from './response/response.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { CommonModule } from './common/common.module';
+import { NotificationModule } from './notification/notification.module';
+import { UserModule } from './user/user.module';
+import { SmsModule } from './sms/sms.module';
+import { IvrModule } from './ivr/ivr.module';
 
 @Module({
-  imports: [AuthModule, AdminModule, SurveyModule, ResponseModule, AnalyticsModule, CommonModule],
+  imports: [AuthModule, AdminModule, SurveyModule, ResponseModule, AnalyticsModule, CommonModule, NotificationModule, UserModule, SmsModule, IvrModule],
   controllers: [],
   providers: [],
 })

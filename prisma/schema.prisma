@@ -19,6 +19,21 @@ model Admin {
   password_hash String
   created_at    DateTime @default(now())
   surveys       Survey[]
+  notifications Notification[]
+}
+
+model User {
+  user_id       String   @id @default(uuid())
+  phone_number  String   @unique
+  name          String?
+  country       String
+  district      String
+  sector        String
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  responses     Response[]
+  userNotifications UserNotification[]
 }
 
 model Survey {
@@ -67,12 +82,11 @@ model QuestionOption {
 model Response {
   response_id     String   @id @default(uuid())
   anonymous_token String   @unique
-  country         String
-  district        String
-  sector          String
   submitted_at    DateTime @default(now())
   survey          Survey   @relation(fields: [surveyId], references: [survey_id])
   surveyId        String
+  user            User?    @relation(fields: [userId], references: [user_id])
+  userId          String?
   answers         Answer[]
 }
 
@@ -83,4 +97,48 @@ model Answer {
   responseId  String
   question    Question @relation(fields: [questionId], references: [question_id])
   questionId  String
+}
+
+model Notification {
+  notification_id   String   @id @default(uuid())
+  title             String
+  message           String
+  type              String
+  target_audience   String
+  delivery_method   String
+  status            String   @default("pending")
+  delivery_rate     Float?
+  created_at        DateTime @default(now())
+  scheduled_at      DateTime?
+  sent_at           DateTime?
+  admin             Admin    @relation(fields: [adminId], references: [admin_id])
+  adminId           String
+  deliveries        NotificationDelivery[]
+  userNotifications UserNotification[]
+}
+
+model NotificationDelivery {
+  delivery_id      String   @id @default(uuid())
+  notification_id  String
+  user_id          String
+  delivery_method  String
+  status           String   @default("pending")
+  sent_at          DateTime?
+  delivered_at     DateTime?
+  error_message    String?
+  notification     Notification @relation(fields: [notification_id], references: [notification_id])
+}
+
+model UserNotification {
+  user_notification_id String   @id @default(uuid())
+  user_id             String
+  notification_id     String
+  title               String
+  message             String
+  type                String
+  is_read             Boolean  @default(false)
+  created_at          DateTime @default(now())
+  read_at             DateTime?
+  user                User     @relation(fields: [user_id], references: [user_id])
+  notification        Notification @relation(fields: [notification_id], references: [notification_id])
 }

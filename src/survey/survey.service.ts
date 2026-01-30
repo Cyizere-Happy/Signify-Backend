@@ -2,13 +2,19 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../common/prisma.service';
 import { CreateSurveyDto } from './dto/create-survey.dto';
 import { UpdateSurveyDto } from './dto/update-survey.dto';
+import { NotificationService } from '../notification/notification.service';
+import { SmsService } from '../sms/sms.service';
 
 @Injectable()
 export class SurveyService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private notificationService: NotificationService,
+        private smsService: SmsService
+    ) { }
 
     async create(createSurveyDto: CreateSurveyDto, adminId: string) {
-        return this.prisma.survey.create({
+        const survey = await this.prisma.survey.create({
             data: {
                 title: createSurveyDto.title,
                 description: createSurveyDto.description,
@@ -47,6 +53,29 @@ export class SurveyService {
                 },
             },
         });
+
+        // Create notification for new survey if it's active
+        if (survey.status === 'active') {
+            await this.notificationService.createSurveyNotification(
+                survey.survey_id,
+                survey.title,
+                createSurveyDto.locations
+            );
+
+            // Send SMS notifications to users in survey locations
+            try {
+                const smsResults = await this.smsService.sendSurveyNotification(
+                    survey.title,
+                    createSurveyDto.locations
+                );
+                console.log(`SMS notification sent for survey "${survey.title}": ${smsResults.success} sent, ${smsResults.failed} failed`);
+            } catch (error) {
+                console.error('Failed to send SMS notifications for survey:', error);
+                // Don't fail the survey creation if SMS fails
+            }
+        }
+
+        return survey;
     }
 
     async findAll() {
@@ -113,7 +142,8 @@ export class SurveyService {
     }
 
     async findByLocation(country: string, district: string, sector: string) {
-        return this.prisma.survey.findMany({
+        console.log("Hit", { country, district, sector });
+        const result = await this.prisma.survey.findMany({
             where: {
                 status: 'active',
                 locations: {
@@ -142,6 +172,8 @@ export class SurveyService {
                 locations: true,
             },
         });
+        console.log("Query result:", result.length, "surveys found");
+        return result;
     }
 
     async update(id: string, updateSurveyDto: UpdateSurveyDto, adminId: string) {
@@ -198,8 +230,45 @@ export class SurveyService {
             throw new ForbiddenException('You can only delete your own surveys');
         }
 
-        return this.prisma.survey.delete({
-            where: { survey_id: id },
+        // Delete related records first due to foreign key constraints
+        await this.prisma.$transaction(async (tx) => {
+            // Delete survey locations
+            await tx.surveyLocation.deleteMany({
+                where: { surveyId: id }
+            });
+
+            // Delete answers first (they depend on questions)
+            await tx.answer.deleteMany({
+                where: {
+                    question: {
+                        surveyId: id
+                    }
+                }
+            });
+
+            // Delete question options first (they depend on questions)
+            await tx.questionOption.deleteMany({
+                where: {
+                    question: {
+                        surveyId: id
+                    }
+                }
+            });
+
+            // Delete questions (now that options and answers are deleted)
+            await tx.question.deleteMany({
+                where: { surveyId: id }
+            });
+
+            // Delete responses related to this survey
+            await tx.response.deleteMany({
+                where: { surveyId: id }
+            });
+
+            // Finally delete the survey
+            return tx.survey.delete({
+                where: { survey_id: id }
+            });
         });
     }
 }
