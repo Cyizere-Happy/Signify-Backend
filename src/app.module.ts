@@ -9,10 +9,11 @@ import { NotificationModule } from './notification/notification.module';
 import { UserModule } from './user/user.module';
 import { SmsModule } from './sms/sms.module';
 import { IvrModule } from './ivr/ivr.module';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [AuthModule, AdminModule, SurveyModule, ResponseModule, AnalyticsModule, CommonModule, NotificationModule, UserModule, SmsModule, IvrModule],
-  controllers: [],
+  controllers: [HealthController],
   providers: [],
 })
 export class AppModule {}
